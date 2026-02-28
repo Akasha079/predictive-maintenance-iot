@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IoT Predictive Maintenance</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div class="dashboard">
+        <header>
+            <div>
+                <h1>IoT Asset Monitor <span>v2.0</span></h1>
+                <p style="color: var(--text-muted); font-size: 0.8rem; margin-top: 0.25rem;">Industrial Predictive
+                    Maintenance Intelligence</p>
+            </div>
+            <div id="fleet-status" style="text-align: right;">
+                <span id="active-assets">0</span> Assets Monitored
+            </div>
+        </header>
+
+        <div class="grid">
+            <aside class="device-sidebar" id="deviceList">
+                <!-- Device cards will be injected here -->
+                <div style="text-align: center; padding: 2rem;">Loading fleet data...</div>
+            </aside>
+
+            <main class="detail-view">
+                <div id="no-selection" class="chart-card"
+                    style="display: flex; height: 100%; align-items: center; justify-content: center; text-align: center;">
+                    <div>
+                        <div style="font-size: 3rem; margin-bottom: 1rem;">🛰️</div>
+                        <h3>Select an asset from the fleet monitor</h3>
+                        <p style="color: var(--text-muted);">Real-time telemetry and RUL predictions will appear here
+                        </p>
+                    </div>
+                </div>
+
+                <div id="selection-details" class="hidden">
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <div class="label">Remaining Useful Life</div>
+                            <div class="value" id="rul_val">--</div>
+                            <div class="unit" style="font-size: 0.8rem; color: var(--text-muted);">HOURS</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="label">Operating Status</div>
+                            <div class="value" id="status_val">--</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="label">Failure Risk</div>
+                            <div class="value" id="risk_val">--</div>
+                            <div class="progress-container">
+                                <div id="risk_bar" class="progress-bar" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="charts-container">
+                        <div class="chart-card" id="vibrationChart"></div>
+                        <div class="chart-card" id="tempChart"></div>
+                        <div class="chart-card" id="electricChart"></div>
+                        <div class="chart-card" id="mechanicalChart"></div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        let selectedDeviceId = null;
+
+        async function loadFleet() {
+            try {
+                const r = await fetch('/api/sim/fleet?num=12');
+                const data = await r.json();
+
+                const list = document.getElementById('deviceList');
+                list.innerHTML = '';
+                document.getElementById('active-assets').textContent = data.length;
+
+                data.forEach(d => {
+                    const card = document.createElement('div');
+                    card.className = `device-card ${selectedDeviceId === d.device_id ? 'active' : ''}`;
+                    card.onclick = () => selectDevice(d.device_id);
+
+                    const healthClass = d.health_status.toLowerCase();
+                    card.innerHTML = `
+                        <div class="device-id">${d.device_id}</div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem;">
+                            <span class="health-badge bg-${healthClass}">${d.health_status}</span>
+                            <span style="font-size: 0.75rem; color: var(--text-muted)">RUL: ${d.rul_hours}h</span>
+                        </div>
+                    `;
+                    list.appendChild(card);
+                });
+            } catch (e) { console.error(e); }
+        }
+
+        async function selectDevice(deviceId) {
+            selectedDeviceId = deviceId;
+            document.querySelectorAll('.device-card').forEach(c => c.classList.remove('active'));
+            // Find and highlight
+
+            document.getElementById('no-selection').classList.add('hidden');
+            const details = document.getElementById('selection-details');
+            details.classList.remove('hidden');
+
+            try {
+                const r = await fetch(`/api/sim/device/${deviceId}?hours=168`);
+                const data = await r.json();
+                const latest = data[data.length - 1];
+
+                // Update Stats
+                document.getElementById('rul_val').textContent = latest.rul_hours;
+                document.getElementById('status_val').textContent = latest.health_status.toUpperCase();
+                document.getElementById('status_val').className = `value ${latest.health_status.toLowerCase()}`;
+
+                const risk = (latest.degradation_progress * 100).toFixed(1);
+                document.getElementById('risk_val').textContent = `${risk}%`;
+                document.getElementById('risk_bar').style.width = `${risk}%`;
+                document.getElementById('risk_bar').style.background = `var(--status-${latest.health_status.toLowerCase()})`;
+
+                // Render Charts
+                renderChart('vibrationChart', 'Vibration (mm/s)', 'vibration', data, '#00f2ff');
+                renderChart('tempChart', 'Temperature (°C)', 'temperature', data, '#ff3c00');
+                renderChart('electricChart', 'Amperage (A)', 'current', data, '#ffea00');
+                renderChart('mechanicalChart', 'Pressure (PSI)', 'pressure', data, '#00ff88');
+
+            } catch (e) { console.error(e); }
+            loadFleet(); // Refresh fleet statuses
+        }
+
+        function renderChart(divId, title, key, data, color) {
+            const trace = {
+                x: data.map(d => d.timestamp),
+                y: data.map(d => d[key]),
+                type: 'scatter',
+                mode: 'lines',
+                line: { color: color, width: 2 },
+                name: key
+            };
+            const layout = {
+                title: { text: title, font: { color: '#fff', size: 14 } },
+                paper_bgcolor: 'rgba(0,0,0,0)',
+                plot_bgcolor: 'rgba(0,0,0,0)',
+                margin: { l: 40, r: 20, t: 40, b: 30 },
+                xaxis: { tickfont: { color: '#8892b0' }, gridcolor: 'rgba(255,255,255,0.05)' },
+                yaxis: { tickfont: { color: '#8892b0' }, gridcolor: 'rgba(255,255,255,0.05)' }
+            };
+            Plotly.newPlot(divId, [trace], layout);
+        }
+
+        loadFleet();
+        setInterval(loadFleet, 30000); // Pulse fleet status every 30s
+    </script>
+</body>
+
+</html>

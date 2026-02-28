@@ -1,0 +1,210 @@
+:root {
+    --bg-dark: #05070a;
+    --card-bg: rgba(16, 20, 28, 0.9);
+    --primary: #00f2ff;
+    --secondary: #7000ff;
+    --text: #e0e6ed;
+    --text-muted: #8892b0;
+    --border: rgba(0, 242, 255, 0.1);
+
+    --status-normal: #00ff88;
+    --status-degrading: #ffea00;
+    --status-warning: #ff9d00;
+    --status-critical: #ff3c00;
+    --status-failure: #ff0000;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background-color: var(--bg-dark);
+    background-image:
+        radial-gradient(circle at 10% 20%, rgba(0, 242, 255, 0.05) 0%, transparent 40%),
+        radial-gradient(circle at 90% 80%, rgba(112, 0, 255, 0.05) 0%, transparent 40%);
+    color: var(--text);
+    padding: 2rem;
+    min-height: 100vh;
+}
+
+.dashboard {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2.5rem;
+    border-left: 4px solid var(--primary);
+    padding-left: 1.5rem;
+}
+
+h1 {
+    font-size: 1.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--primary);
+    text-shadow: 0 0 10px rgba(0, 242, 255, 0.3);
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: 1fr 3fr;
+    gap: 2rem;
+}
+
+/* Device List Sidebar */
+.device-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.device-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 0.5rem;
+    padding: 1rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.device-card:hover,
+.device-card.active {
+    border-color: var(--primary);
+    background: rgba(0, 242, 255, 0.05);
+    transform: translateX(5px);
+}
+
+.device-id {
+    font-weight: 700;
+    font-family: monospace;
+    font-size: 1.1rem;
+}
+
+.health-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    font-weight: 800;
+    margin-top: 0.5rem;
+}
+
+/* Detail View */
+.detail-view {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+}
+
+.stat-item {
+    background: var(--card-bg);
+    padding: 1.5rem;
+    border-radius: 0.5rem;
+    border-bottom: 3px solid var(--primary);
+}
+
+.label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 0.5rem;
+}
+
+.value {
+    font-size: 1.75rem;
+    font-weight: 700;
+}
+
+/* Charts */
+.charts-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+}
+
+.chart-card {
+    background: var(--card-bg);
+    padding: 1.25rem;
+    border-radius: 0.5rem;
+    height: 300px;
+}
+
+/* Status colors */
+.normal {
+    color: var(--status-normal);
+}
+
+.degrading {
+    color: var(--status-degrading);
+}
+
+.warning {
+    color: var(--status-warning);
+}
+
+.critical {
+    color: var(--status-critical);
+}
+
+.failure {
+    color: var(--status-failure);
+}
+
+.bg-normal {
+    background: var(--status-normal);
+    color: #000;
+}
+
+.bg-degrading {
+    background: var(--status-degrading);
+    color: #000;
+}
+
+.bg-warning {
+    background: var(--status-warning);
+    color: #000;
+}
+
+.bg-critical {
+    background: var(--status-critical);
+    color: #fff;
+}
+
+.bg-failure {
+    background: var(--status-failure);
+    color: #fff;
+}
+
+/* Progress bar */
+.progress-container {
+    height: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+    margin-top: 1rem;
+}
+
+.progress-bar {
+    height: 100%;
+    background: var(--primary);
+    border-radius: 3px;
+    transition: width 0.5s ease;
+}
+
+.hidden {
+    display: none;
+}
